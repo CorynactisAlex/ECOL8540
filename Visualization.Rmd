@@ -1,0 +1,283 @@
+---
+title: "Visualization"
+author: "Alex Lee"
+date: "5/17/2017"
+output:
+  html_document: default
+---
+
+```{r setup}
+## Set Workspace
+setwd("~/R/Classes/ECOL 8540 Intro/ECOL8540")
+
+## Load Packages
+library(ggplot2)
+library(plotly)
+library(lubridate)
+
+## Load Data
+mers <- read.csv('cases.csv')
+
+# Correcting errors in mers data
+mers$hospitalized[890] <- c('2015-02-20')
+mers <- mers[-471,]
+
+mers$onset2 <- ymd(mers$onset)
+mers$hospitalized2 <- ymd(mers$hospitalized)
+
+day0 <- min(na.omit(mers$onset2))
+
+mers$epi.day <- as.numeric(mers$onset2 - day0)
+```
+
+## Introduction
+
+### Making a Plot
+
+```{r}
+# Making a Plot
+ggplot(data = mers) +
+  geom_bar(mapping = aes(x = epi.day)) +
+  labs(x     = 'Epidemic day', 
+       y     = 'Case count', 
+       title = 'Global count of MERS cases by date of symptom onset', caption = "Data from: https://github.com/rambaut/MERS-Cases/blob/gh-pages/data/cases.csv")
+```
+
+### By Country
+
+```{r}
+# fill = country
+ggplot(data = mers) +
+  geom_bar(mapping = aes(x    = epi.day,
+                         fill = country)) +
+  labs(x     = 'Epidemic day', 
+       y     = 'Case count', 
+       title = 'Global count of MERS cases by date of symptom onset', caption = "Data from: https://github.com/rambaut/MERS-Cases/blob/gh-pages/data/cases.csv")
+```
+
+#### Position = Fill
+
+```{r}
+# position = fill
+ggplot(data = mers, position = fill) +
+  geom_bar(mapping = aes(x    = epi.day,
+                         fill = country)) +
+  labs(x     = 'Epidemic day', 
+       y     = 'Case count', 
+       title = 'Global count of MERS cases by date of symptom onset', caption = "Data from: https://github.com/rambaut/MERS-Cases/blob/gh-pages/data/cases.csv")
+```
+
+### Polar Chart
+
+```{r}
+# coord_flip and coord_polar
+ggplot(data = mers, position = fill) +
+  geom_bar(mapping = aes(x    = epi.day,
+                         fill = country)) +
+  labs(x     = 'Epidemic day', 
+       y     = 'Case count', 
+       title = 'Global count of MERS cases by date of symptom onset', caption = "Data from: https://github.com/rambaut/MERS-Cases/blob/gh-pages/data/cases.csv") +
+  coord_flip() +
+  coord_polar()
+```
+
+## Univariate Plots
+
+### Distribution of of infectious period
+
+```{r}
+## UNIVARIATE PLOTS ##
+mers$infectious.period <- mers$hospitalized2 - mers$onset2
+mers$infectious.period <- as.numeric(mers$infectious.period,
+                                     units = "days")
+ggplot(data = mers) +
+  geom_histogram(aes(x = infectious.period)) +
+  labs(x = 'Infectious period', 
+       y = 'Frequency', 
+       title = 'Distribution of calculated MERS infectious period',
+       caption = "Data from: https://github.com/rambaut/MERS-Cases/blob/gh-pages/data/cases.")
+```
+
+### Distribution of of infectious period
+
+Positive values only.
+
+```{r}
+# Positive infectious periods only
+mers$infectious.period2 <- ifelse(mers$infectious.period < 0,
+                                  0,
+                                  mers$infectious.period)
+ggplot(data = mers) +
+  geom_histogram(aes(x = infectious.period2)) +
+  labs(x = 'Infectious period', 
+       y = 'Frequency', 
+       title = 'Distribution of calculated MERS infectious period (positive values only)',
+       caption = "Data from: https://github.com/rambaut/MERS-Cases/blob/gh-pages/data/cases.")
+```
+
+### Density Plot
+
+```{r}
+# Density Plot
+ggplot(data = mers) +
+  geom_density(mapping = aes(x = infectious.period2)) +
+  labs(x = 'Infectious period', 
+       y = 'Frequency', 
+       title = 'Probability density for MERS infectious period (positive values only)',
+       caption = "Data from: https://github.com/rambaut/MERS-Cases/blob/gh-pages/data/cases.")
+```
+
+### Area Plot
+
+```{r}
+# Area Plot
+ggplot(data = mers) +
+  geom_area(stat = 'bin',
+            mapping = aes(x = infectious.period2)) +
+  labs(x = 'Infectious period', 
+       y = 'Frequency', 
+       title = 'Area plot for MERS infectious period (positive values only)',
+       caption = "Data from: https://github.com/rambaut/MERS-Cases/blob/gh-pages/data/cases.")
+```
+
+### Dot Plot
+
+```{r}
+# Dot Plot
+ggplot(data = mers) +
+  geom_dotplot(mapping = aes(x = infectious.period2)) +
+  labs(x = 'Infectious period', 
+       y = 'Frequency', 
+       title = 'Area plot for MERS infectious period (positive values only)',
+       caption = "Data from: https://github.com/rambaut/MERS-Cases/blob/gh-pages/data/cases.")
+```
+
+### Bar Plot 
+
+```{r}
+# Bar Plot
+ggplot(data = mers) +
+  geom_bar(mapping = aes(x = infectious.period2)) +
+  labs(x = 'Infectious period', 
+       y = 'Frequency', 
+       title = 'Area plot for MERS infectious period (positive values only)',
+       caption = "Data from: https://github.com/rambaut/MERS-Cases/blob/gh-pages/data/cases.")
+```
+
+## Bivariate Plots
+
+### Infectious Period Over Time
+
+```{r}
+## BIVARIATE PLOTS ##
+
+# Infectious period over the course of the MERS epidemic
+ggplot(data = mers) +
+  geom_line(mapping = aes(y = infectious.period2, 
+                          x = onset2))  +
+  labs(x = 'Onset',
+       y = 'Infectious Period', 
+       title = 'Infectious Period During MERS Epidemic (positive values only)',
+       caption = "Data from: https://github.com/rambaut/MERS-Cases/blob/gh-pages/data/cases.")
+```
+
+### Societal Learning?
+
+```{r}
+# Societal Learning
+ggplot(data = mers) +
+  geom_line(mapping = aes(y = infectious.period2, 
+                          x = onset2))  +
+  geom_smooth(mapping = aes(y = infectious.period2, 
+                            x = onset2),
+              method = "loess")  +
+  labs(x = 'Onset', 
+       y = 'Infectious Period', 
+       title = 'Infectious Period During MERS Epidemic (positive values only)',
+       caption = "Data from: https://github.com/rambaut/MERS-Cases/blob/gh-pages/data/cases.")
+```
+
+### By Country
+
+```{r}
+# By Country
+ggplot(data = mers) +
+  geom_line(mapping = aes(y = infectious.period2, 
+                          x = onset2))  +
+  geom_smooth(mapping = aes(y = infectious.period2, 
+                            x = onset2,
+                            fill = country),
+              method = "loess")  +
+  labs(x = 'Onset', 
+       y = 'Infectious Period', 
+       title = 'Infectious Period During MERS Epidemic (positive values only)',
+       caption = "Data from: https://github.com/rambaut/MERS-Cases/blob/gh-pages/data/cases.")
+```
+
+## Faceting
+
+### Country
+
+```{r}
+## FACETING ##
+# By Country
+ggplot(data = mers, 
+       mapping = aes(x=epi.day, y=infectious.period2)) + 
+  geom_point(mapping = aes(color=country)) +
+  facet_wrap(~ country) +
+  scale_y_continuous(limits = c(0, 50)) +
+  labs(x='Epidemic day', 
+       y = 'Infectious period',
+       title='MERS infectious period by country', 
+       caption = "Data from: https://github.com/rambaut/MERS-Cases/blob/gh-pages/data/cases.")
+```
+
+### Country & Gender
+
+```{r}
+# By Country & Gender
+ggplot(data = subset(mers, gender %in% c('M', 'F') & country %in% c('KSA', 'Oman', 'Iran', 'Jordan', 'Qatar', 'South Korea', 'UAE' )),
+       mapping = aes(x=epi.day, y=infectious.period2 )) +
+  geom_point(mapping = aes(color=country)) +
+  facet_grid(gender ~ country) +
+  scale_y_continuous(limits = c(0, 50)) +
+  labs(x = 'Epidemic day', 
+       y = 'Infectious period',
+       title = 'MERS infectious period by gender and country', 
+       caption = "Data from: https://github.com/rambaut/MERS-Cases/blob/gh-pages/data/cases.")
+```
+
+### Case Fatality Rate
+
+Work in progress, code does not work.
+
+```{r, eval=FALSE, include=FALSE}
+# Case Fatality Rate
+mers.cfr <- 
+
+ggplot(data = subset(mers, outcome %in% c("fatal", "", "recovered") & country %in% c('KSA', 'Oman', 'Iran', 'Jordan', 'Qatar', 'South Korea', 'UAE')),
+       mapping = aes(x = epi.day, y = infectious.period2)) +
+  geom_point(mapping = aes(color = country)) +
+  facet_wrap(~ country) +
+  scale_y_continuous(limits = c(0, 50)) +
+  labs(x = 'Epidemic day', 
+       y = 'Infectious period',
+       title = 'MERS infectious period by gender and country', 
+       caption = "Data from: https://github.com/rambaut/MERS-Cases/blob/gh-pages/data/cases.")
+```
+
+### Interactive
+
+For HTML output only.
+
+```{r}
+# More
+epi.curve <- ggplot(data = mers) +
+  geom_bar(mapping = aes(x = epi.day)) +
+  labs(x = 'Epidemic day', 
+       y = 'Case count', 
+       title = 'Global count of MERS cases by date of symptom onset',
+       caption = "Data from: https://github.com/rambaut/MERS-Cases/blob/gh-pages/data/cases.csv")
+ggplotly(epi.curve)
+```
+
